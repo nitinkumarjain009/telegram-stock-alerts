@@ -1,4 +1,4 @@
 constants.py
 __pycache__
-alerts_env
+*env
 alerts.db

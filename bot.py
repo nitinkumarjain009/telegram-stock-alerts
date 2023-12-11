@@ -61,7 +61,11 @@ def validate_ticker_and_price_data(message):
             send_error_message(message, category="ticker symbol", reason="a lack of price data")
         else:
             validated_price_data = price_data
-            alert_prompt = f"Add an alert level for {validated_ticker_symbol}. For example:\n130.02\nMA100 (100 daily moving average)\n10%\n-5.5%"
+            
+            last_close = validated_price_data["Adj Close"].iloc[-1]
+            last_date = validated_price_data.index[-1].date()
+                        
+            alert_prompt = f"The last close price for {validated_ticker_symbol} is {last_close:.2f} on {last_date}.\n\nAdd an alert level for {validated_ticker_symbol}. For example:\n130.02\nMA100 (100 daily moving average)\n10%\n-5.5%"
             price_message = bot.send_message(message.chat.id, alert_prompt)
             bot.register_next_step_handler(message, validate_alert_level, validated_ticker_symbol, validated_price_data)
 
@@ -74,9 +78,7 @@ def prompt_alert_level(message):
 
 def validate_alert_level(message, validated_ticker_symbol, validated_price_data):
         ''''''
-        alert_level = None
         last_close = validated_price_data["Adj Close"].iloc[-1]
-        
         if message.text.startswith("MA") and message.text.replace("MA", "", 1).isdigit():
             validated_alert_level = message.text
         elif message.text.replace("%", "", 1).replace(".", "", 1).replace("-", "", 1).isdigit() and message.text.endswith("%"):
@@ -85,14 +87,15 @@ def validate_alert_level(message, validated_ticker_symbol, validated_price_data)
             validated_alert_level = float(message.text)
         else:
             # Display an error for an invalid alert level
-            send_error_message(message.chat.id, category="alert level", reason="a wrong price input")
+            send_error_message(message, category="alert level", reason="a wrong price input")
             return
-        add_alert_to_database(validated_ticker_symbol, validated_alert_level, last_close)
+        add_alert_to_database(message, validated_ticker_symbol, validated_alert_level, last_close)
 
-def add_alert_to_database(validated_ticker_symbol, validated_alert_level, last_close):
+def add_alert_to_database(message, validated_ticker_symbol, validated_alert_level, last_close):
     connection = database.connect()
     database.create_table(connection)
     database.add_alert(connection, validated_ticker_symbol, validated_alert_level, last_close)
+    bot.send_message(message.chat.id, f"Successfully added alert for {validated_ticker_symbol} at {validated_alert_level}!")
 
 def show_all_alerts(call):
     connection = database.connect()
@@ -100,10 +103,20 @@ def show_all_alerts(call):
     formatted_alerts = "\n".join(map(str, all_alerts))
     bot.send_message(call.from_user.id, formatted_alerts)
 
+def delete_alert_by_id(message):
+    validated_id = message.text # check if int and in database
+    database.delete_alert_by_id(validated_id)
+
+def send_error_message(message, category, reason):
+    bot.send_message(message.chat.id, f"Invalid {category} due to {reason}! Please enter a valid one.")
+
 bot.infinity_polling()
 
 
-
+# TODO: format show all alerts as table
+# TODO: format alert_prompt in a nicer way
+# TODO: create check_alerts.py
+# TODO: deploy to Linode
 
 
 
