@@ -1,8 +1,12 @@
+import constants
 import telebot 
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import yfinance as yf
 import database
 
+
+# Telegram token stored in constants.py
+TELEGRAM_TOKEN = constants.TELEGRAM_TOKEN
 
 # Create an instance of Telebot
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
