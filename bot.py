@@ -11,6 +11,10 @@ TELEGRAM_TOKEN = constants.TELEGRAM_TOKEN
 # Create an instance of Telebot
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
+# Create alerts database
+connection = database.connect()
+database.create_table(connection)
+
 # Define a command handler for /start or /help
 @bot.message_handler(commands=["start", "help"])
 def start_menu(message):
@@ -39,25 +43,31 @@ def add_alert(call):
     bot.register_next_step_handler(call.message, validate_ticker_and_price_data)
 
 def delete_alert(call):
-    bot.send_message(call.from_user.id, "Type the alert ID which you would like to delete.")
-    show_all_alerts(call)
-    # TODO: should first validate before deleting
-    bot.register_next_step_handler(call.message, validate_id)
-
-def validate_id(message):
-    validated_id = int(message.text) if message.text.isdigit() else None 
-    if validated_id:
+    connection = database.connect()
+    all_alerts = database.get_all_alerts(connection)
+    if all_alerts:
+        bot.send_message(call.from_user.id, "Type the alert ID which you would like to delete.")
+        show_all_alerts(call)
+        bot.register_next_step_handler(call.message, validate_row_number)
+    else:
+        bot.send_message(call.from_user.id, "No alerts have been added yet.")
+    
+def validate_row_number(message):
+    validated_row_number = int(message.text) if message.text.isdigit() else None 
+    if validated_row_number:
         connection = database.connect()
-        database.delete_alert_by_id(connection, validated_id)
-        bot.send_message(call.from_user.id, "Alert has been deleted.")
+        database.delete_alert_by_row_number(connection, validated_row_number)
+        bot.send_message(call.from_user.id, "Alert has been deleted.")  # FIXME
 
 def show_all_alerts(call):
     connection = database.connect()
     all_alerts = database.get_all_alerts(connection)
-    print(all_alerts)
-    formatted_alerts = [f"{row_num}\t{row[1]}\t{row[2]}" for row_num, row in enumerate(all_alerts)]
-    formatted_alerts = "\n".join(formatted_alerts)
-    bot.send_message(call.from_user.id, formatted_alerts)
+    if all_alerts:
+        formatted_alerts = [f"{row[3]}\t{row[0]}\t{row[1]}\t{row[2]}" for row in all_alerts]
+        formatted_alerts = "\n".join(formatted_alerts)
+        bot.send_message(call.from_user.id, formatted_alerts)
+    else:
+        bot.send_message(call.from_user.id, "No alerts have been added yet.")
 
 def validate_ticker(message):
     # Check for illegal symbols
@@ -102,13 +112,13 @@ def prompt_alert_level(message):
 
 def validate_alert_level(message, validated_ticker_symbol, validated_price_data):
         ''''''
-        last_close = validated_price_data["Adj Close"].iloc[-1]
+        last_close = round(validated_price_data["Adj Close"].iloc[-1], 2)
         if message.text.startswith("MA") and message.text.replace("MA", "", 1).isdigit():
             validated_alert_level = message.text
         elif message.text.replace("%", "", 1).replace(".", "", 1).replace("-", "", 1).isdigit() and message.text.endswith("%"):
-            validated_alert_level = (1+float(message.text.replace("%", "", 1))/100)*last_close
+            validated_alert_level = round((1+float(message.text.replace("%", "", 1))/100)*last_close, 2)
         elif message.text.replace(".", "", 1).isdigit():
-            validated_alert_level = float(message.text)
+            validated_alert_level = round(float(message.text), 2)
         else:
             # Display an error for an invalid alert level
             send_error_message(message, category="alert level", reason="a wrong price input")
@@ -117,7 +127,6 @@ def validate_alert_level(message, validated_ticker_symbol, validated_price_data)
 
 def add_alert_to_database(message, validated_ticker_symbol, validated_alert_level, last_close):
     connection = database.connect()
-    database.create_table(connection)
     database.add_alert(connection, validated_ticker_symbol, validated_alert_level, last_close)
     bot.send_message(message.chat.id, f"Successfully added alert for {validated_ticker_symbol} at {validated_alert_level:.2f}!")
 
