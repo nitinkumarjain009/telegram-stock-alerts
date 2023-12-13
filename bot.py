@@ -63,7 +63,7 @@ def show_all_alerts(call):
     connection = database.connect()
     all_alerts = database.get_all_alerts(connection)
     if all_alerts:
-        formatted_alerts = [f"{row[3]}\t{row[0]}\t{row[1]}\t{row[2]}" for row in all_alerts]
+        formatted_alerts = [f"{row[4]}\t{row[1]}\t{row[2]}\t{row[3]}" for row in all_alerts]
         formatted_alerts = "\n".join(formatted_alerts)
         bot.send_message(call.from_user.id, formatted_alerts)
     else:
@@ -128,7 +128,7 @@ def validate_alert_level(message, validated_ticker_symbol, validated_price_data)
 def add_alert_to_database(message, validated_ticker_symbol, validated_alert_level, last_close):
     connection = database.connect()
     database.add_alert(connection, validated_ticker_symbol, validated_alert_level, last_close)
-    bot.send_message(message.chat.id, f"Successfully added alert for {validated_ticker_symbol} at {validated_alert_level:.2f}!")
+    bot.send_message(message.chat.id, f"Successfully added alert for {validated_ticker_symbol} at {validated_alert_level}!")
 
 def send_error_message(message, category, reason):
     bot.send_message(message.chat.id, f"Invalid {category} due to {reason}! Please enter a valid one.")
