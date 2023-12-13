@@ -63,9 +63,9 @@ def show_all_alerts(call):
     connection = database.connect()
     all_alerts = database.get_all_alerts(connection)
     if all_alerts:
-        formatted_alerts = [f"{row[4]}\t{row[1]}\t{row[2]}\t{row[3]}" for row in all_alerts]
+        formatted_alerts = [f"<b>Alert {row[4]}</b>\n<b>Ticker:</b> {row[1]}\n<b>Close Price:</b> {row[2]}\n<b>Alert Level:</b> {row[3]}\n" for row in all_alerts]
         formatted_alerts = "\n".join(formatted_alerts)
-        bot.send_message(call.from_user.id, formatted_alerts)
+        bot.send_message(call.from_user.id, formatted_alerts, parse_mode="html")
     else:
         bot.send_message(call.from_user.id, "No alerts have been added yet.")
 
@@ -136,9 +136,5 @@ def send_error_message(message, category, reason):
 bot.infinity_polling()
 
 
-# TODO: fix delete functionality
-# TODO: add row_number column to alerts SQL table
-# TODO: format show all alerts as table
-# TODO: format alert_prompt in a nicer way
 # TODO: create check_alerts.py
 # TODO: deploy to Linode
