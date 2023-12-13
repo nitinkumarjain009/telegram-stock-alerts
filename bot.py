@@ -51,13 +51,13 @@ def delete_alert(call):
         bot.register_next_step_handler(call.message, validate_row_number)
     else:
         bot.send_message(call.from_user.id, "No alerts have been added yet.")
-    
+
 def validate_row_number(message):
     validated_row_number = int(message.text) if message.text.isdigit() else None 
     if validated_row_number:
         connection = database.connect()
         database.delete_alert_by_row_number(connection, validated_row_number)
-        bot.send_message(call.from_user.id, "Alert has been deleted.")  # FIXME
+        bot.send_message(message.chat.id, "Alert has been deleted.")
 
 def show_all_alerts(call):
     connection = database.connect()
