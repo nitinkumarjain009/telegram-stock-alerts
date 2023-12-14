@@ -39,35 +39,37 @@ def handle_callback_query(call):
         show_all_alerts(call)
 
 def add_alert(call):
-    bot.send_message(call.from_user.id, "Type the ticker symbol which you would like to add.")
+    bot.send_message(call.message.chat.id, "Type the ticker symbol which you would like to add.")
     bot.register_next_step_handler(call.message, validate_ticker_and_price_data)
 
 def delete_alert(call):
     connection = database.connect()
-    all_alerts = database.get_all_alerts(connection)
+    all_alerts = database.get_all_alerts(connection, call.message.chat.id)
     if all_alerts:
-        bot.send_message(call.from_user.id, "Type the alert ID which you would like to delete.")
+        bot.send_message(call.message.chat.id, "Type the alert ID which you would like to delete.")
         show_all_alerts(call)
         bot.register_next_step_handler(call.message, validate_row_number)
     else:
-        bot.send_message(call.from_user.id, "No alerts have been added yet.")
+        bot.send_message(call.message.chat.id, "No alerts have been added yet.")
 
 def validate_row_number(message):
     validated_row_number = int(message.text) if message.text.isdigit() else None 
     if validated_row_number:
         connection = database.connect()
-        database.delete_alert_by_row_number(connection, validated_row_number)
+        database.delete_alert_by_row_number(connection, message.chat.id, validated_row_number)
         bot.send_message(message.chat.id, "Alert has been deleted.")
+    else:
+        bot.send_message(call.message.chat.id, "That's not a valid alert ID.")
 
 def show_all_alerts(call):
     connection = database.connect()
-    all_alerts = database.get_all_alerts(connection)
+    all_alerts = database.get_all_alerts(connection, call.message.chat.id)
     if all_alerts:
-        formatted_alerts = [f"<b>Alert {row[4]}</b>\n<b>Ticker:</b> {row[1]}\n<b>Close Price:</b> {row[2]}\n<b>Alert Level:</b> {row[3]}\n" for row in all_alerts]
+        formatted_alerts = [f"<b>Alert {row[5]}</b>\n<b>Ticker:</b> {row[2]}\n<b>Close Price:</b> {row[3]}\n<b>Alert Level:</b> {row[4]}\n" for row in all_alerts]
         formatted_alerts = "\n".join(formatted_alerts)
-        bot.send_message(call.from_user.id, formatted_alerts, parse_mode="html")
+        bot.send_message(call.message.chat.id, formatted_alerts, parse_mode="html")
     else:
-        bot.send_message(call.from_user.id, "No alerts have been added yet.")
+        bot.send_message(call.message.chat.id, "No alerts have been added yet.")
 
 def validate_ticker(message):
     # Check for illegal symbols
@@ -88,7 +90,7 @@ def validate_ticker_and_price_data(message):
     
     if validated_ticker:
         # Download price data for valid symbol
-        price_data = get_price_data(validated_ticker)
+        price_data = yf.download(validated_ticker, period="1y")
 
         # Check downloaded price data not empty
         if price_data.empty:
@@ -102,9 +104,6 @@ def validate_ticker_and_price_data(message):
             alert_prompt = f"The last close price for {validated_ticker} is {last_close:.2f} on {last_date}.\n\nAdd an alert level for {validated_ticker}. For example:\n130.02\nMA100 (100 daily moving average)\n10%\n-5.5%"
             price_message = bot.send_message(message.chat.id, alert_prompt)
             bot.register_next_step_handler(message, validate_alert_level, validated_ticker, validated_price_data)
-
-def get_price_data(ticker):
-    return yf.download(ticker, period="1y")
 
 def prompt_alert_level(message):
     bot.send_message(message.chat.id, "Type the ticker symbol which you would like to add.")
@@ -127,7 +126,7 @@ def validate_alert_level(message, validated_ticker_symbol, validated_price_data)
 
 def add_alert_to_database(message, validated_ticker_symbol, validated_alert_level, last_close):
     connection = database.connect()
-    database.add_alert(connection, validated_ticker_symbol, validated_alert_level, last_close)
+    database.add_alert(connection, message.chat.id, validated_ticker_symbol, validated_alert_level, last_close)
     bot.send_message(message.chat.id, f"Successfully added alert for {validated_ticker_symbol} at {validated_alert_level}!")
 
 def send_error_message(message, category, reason):
