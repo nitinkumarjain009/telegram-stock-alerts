@@ -133,7 +133,3 @@ def send_error_message(message, category, reason):
     bot.send_message(message.chat.id, f"Invalid {category} due to {reason}! Please enter a valid one.")
 
 bot.infinity_polling()
-
-
-# TODO: create check_alerts.py
-# TODO: deploy to Linode
