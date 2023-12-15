@@ -65,7 +65,7 @@ def show_all_alerts(call):
     connection = database.connect()
     all_alerts = database.get_all_alerts(connection, call.message.chat.id)
     if all_alerts:
-        formatted_alerts = [f"<b>Alert {row[5]}</b>\n<b>Ticker:</b> {row[2]}\n<b>Close Price:</b> {row[3]}\n<b>Alert Level:</b> {row[4]}\n" for row in all_alerts]
+        formatted_alerts = [f"<b>Alert {row[5]}</b>\n<b>Ticker:</b> {row[2]}\n<b>Close Price:</b> {row[4]}\n<b>Alert Level:</b> {row[3]}\n" for row in all_alerts]
         formatted_alerts = "\n".join(formatted_alerts)
         bot.send_message(call.message.chat.id, formatted_alerts, parse_mode="html")
     else:
