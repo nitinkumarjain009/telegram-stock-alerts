@@ -1,4 +1,9 @@
 import sqlite3
+from logger_config import setup_logger
+import os
+
+
+logger = setup_logger(os.path.basename(__file__))
 
 # SQL queries
 CREATE_ALERTS_TABLE = "CREATE TABLE IF NOT EXISTS alerts (alert_id INTEGER PRIMARY KEY, chat_id TEXT,  ticker TEXT, alert_level TEXT, last_close REAL);"
@@ -24,6 +29,7 @@ def create_table(connection):
 def add_alert(connection, chat_id, ticker, alert_level, last_close):
     with connection:
         connection.execute(INSERT_ALERT, (chat_id, ticker, alert_level, last_close))
+    logger.info(f"{chat_id}: Alert level {message.text} and last close for ticker {ticker} has been added to the database.")
 
 def get_all_alerts(connection, chat_id=None):
     with connection:

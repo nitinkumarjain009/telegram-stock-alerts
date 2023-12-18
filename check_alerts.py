@@ -2,7 +2,11 @@ import constants
 import database
 import telebot
 import yfinance as yf
+from logger_config import setup_logger
+import os
 
+
+logger = setup_logger(os.path.basename(__file__))
 
 # Telegram token stored in constants.py
 TELEGRAM_TOKEN = constants.TELEGRAM_TOKEN
