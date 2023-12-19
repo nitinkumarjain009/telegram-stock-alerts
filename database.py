@@ -20,6 +20,7 @@ def connect():
     return sqlite3.connect("alerts.db")
 
 def get_all_chat_ids(connection):
+    logger.info(f"Retrieving all chat ids with active alerts from database")
     with connection:
         return connection.execute(GET_ALL_CHAT_IDS).fetchall()
 

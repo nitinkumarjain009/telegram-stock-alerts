@@ -103,8 +103,8 @@ def validate_ticker_and_price_data(message):
     if validated_ticker:
         # Download price data for valid symbol
         bot.send_message(message.chat.id, "Attempting download of price data. Please wait.")
-        price_data = yf.download(validated_ticker, period="1y")
         logger.info(f"chat_id: {message.chat.id}: Download price data for {validated_ticker}")
+        price_data = yf.download(validated_ticker, period="1y")
 
         # Check downloaded price data not empty
         if price_data.empty:
