@@ -16,6 +16,7 @@ GET_ALL_CHAT_IDS = "SELECT DISTINCT chat_id FROM alerts;"
 UPDATE_ALERT_CLOSE = "UPDATE alerts SET last_close=? WHERE alert_id=?;"
 
 def connect():
+    logger.info(f"Connect to database")
     return sqlite3.connect("alerts.db")
 
 def get_all_chat_ids(connection):
@@ -29,24 +30,27 @@ def create_table(connection):
 def add_alert(connection, chat_id, ticker, alert_level, last_close):
     with connection:
         connection.execute(INSERT_ALERT, (chat_id, ticker, alert_level, last_close))
-    logger.info(f"{chat_id}: Alert level {message.text} and last close for ticker {ticker} has been added to the database.")
+    logger.info(f"{chat_id}: Alert level {alert_level} and last close {last_close} for ticker {ticker} has been added to the database.")
 
 def get_all_alerts(connection, chat_id=None):
     with connection:
         if chat_id:
+            logger.info(f"{chat_id}: Retrieving all alerts for this chat from database")
             return connection.execute(GET_ALL_ALERTS_PER_CHAT, (chat_id,)).fetchall()
         else:
+            logger.info(f"Retrieving all alerts from database")
             return connection.execute(GET_ALL_ALERTS).fetchall()
-
-def delete_alert(connection, alert_id):
-    with connection:
-        connection.execute(DELETE_ALERT, (alert_id,))
 
 def delete_alert_by_row_number(connection, chat_id, row_number):
     for alert in get_all_alerts(connection, chat_id):
         if alert[5] == row_number:
             alert_id = alert[0]
     delete_alert(connection, alert_id)
+    logger.info(f"{chat_id}: {row_number} found in database. Alert removed from database.")
+
+def delete_alert(connection, alert_id):
+    with connection:
+        connection.execute(DELETE_ALERT, (alert_id,))
 
 def update_close_price(connection, alert_id, current_close):
     with connection:

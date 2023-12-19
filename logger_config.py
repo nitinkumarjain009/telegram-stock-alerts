@@ -11,7 +11,7 @@ def setup_logger(logger_name):
     file_handler.setLevel(logging.DEBUG)
 
     # Create a Formatter to specify the log message format
-    formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(name)s\t%(funcName)s\t%(message)s")
+    formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s in %(funcName)s:%(message)s")
 
     # Set the Formatter for the FileHandler
     file_handler.setFormatter(formatter)
