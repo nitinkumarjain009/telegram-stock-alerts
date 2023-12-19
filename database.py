@@ -17,7 +17,7 @@ UPDATE_ALERT_CLOSE = "UPDATE alerts SET last_close=? WHERE alert_id=?;"
 
 def connect():
     logger.info(f"Connect to database")
-    return sqlite3.connect("alerts.db")
+    return sqlite3.connect("./alerts.db")
 
 def get_all_chat_ids(connection):
     logger.info(f"Retrieving all chat ids with active alerts from database")
