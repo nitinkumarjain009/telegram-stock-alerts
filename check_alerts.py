@@ -39,10 +39,8 @@ def main():
     for alert in all_alerts:
         alert_id, chat_id, ticker, alert_level, last_close, _ = alert
         current_close = round(price_data[("Adj Close", ticker)].loc[price_data[("Adj Close", ticker)].last_valid_index()], 2)
-        
-
         if "MA" in alert_level:
-            alert_level_MA = price_data[("Adj Close", ticker)].rolling(window=int(alert_level.split("MA")[1])).mean().iloc[-1]
+            alert_level_MA = price_data[("Adj Close", ticker)].dropna().rolling(window=int(alert_level.split("MA")[1]), min_periods=1).mean().iloc[-1]
             logger.info(f"chat_id: {chat_id}: Checking alert_id {alert_id} at alert level {alert_level} ({alert_level_MA:.2f}) for {ticker} at last close {last_close} and current close {current_close}")
             if (last_close < alert_level_MA and current_close > alert_level_MA) or (last_close > alert_level_MA and current_close < alert_level_MA):
                 bot.send_message(chat_id, f"Alert triggered for {ticker}! Current close price {current_close} has crossed alert level {alert_level} ({alert_level_MA:.2f}).")
@@ -50,7 +48,9 @@ def main():
                 database.delete_alert(connection, alert_id)
                 logger.info(f"chat_id: {chat_id}: Alert message sent for {ticker} at alert level {alert_level} ({alert_level_MA:.2f}). Alert deleted.")
             else:
-                logger.info(f"chat_id: {chat_id}: Alert not triggered.")
+                connection = database.connect()
+                database.update_close_price(connection, alert_id, current_close)
+                logger.info(f"chat_id: {chat_id}: Alert not triggered for {ticker} at alert level {alert_level}. Updating close price from {last_close} to {current_close}.")
         else:
             alert_level = float(alert_level)
             logger.info(f"chat_id: {chat_id}: Checking alert_id {alert_id} at alert level {alert_level} for {ticker} at last close {last_close} and current close {current_close}")
@@ -63,7 +63,7 @@ def main():
                 connection = database.connect()
                 database.update_close_price(connection, alert_id, current_close)
                 logger.info(f"chat_id: {chat_id}: Alert not triggered for {ticker} at alert level {alert_level}. Updating close price from {last_close} to {current_close}.")
-
+ 
     logger.info("End")
 
 if __name__=="__main__":
