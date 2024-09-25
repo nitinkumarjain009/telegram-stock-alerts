@@ -29,3 +29,20 @@ A Python-based Telegram bot for managing stock price alerts 📊, using Yahoo Fi
 1. Clone the repository:
    ```bash
    git clone https://github.com/kemaldahha/telegram-stock-alerts.git
+   ```
+
+2. Navigate to the project directory:
+   ```bash
+   cd telegram-stock-alerts
+   ```
+
+3. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Create a constants.py file with the following content:
+   ```bash
+   TELEGRAM_TOKEN = 'your_telegram_bot_token_here'
+   ```
+   Replace `your_telegram_bot_token_here` with your actual Telegram bot token.
