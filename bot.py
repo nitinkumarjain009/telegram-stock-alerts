@@ -127,10 +127,24 @@ def validate_ticker(message):
 def validate_alert_level(message, validated_ticker_symbol, validated_price_data):
     """Validates the alert level entered by the user and adds the alert to the database."""
     logger.info(f"chat_id: {message.chat.id}: Received response: {message.text}. Validating {message.text} for ticker {validated_ticker_symbol}.")
+    
+    # Get the last close price
     last_close = round(validated_price_data["Adj Close"].iloc[-1], 2)
     
     # Check if alert level is valid (percentage, price, or moving average)
     if message.text.startswith("MA") and message.text.replace("MA", "", 1).isdigit():
+        # Extract the MA period (e.g., 1400 from MA1400)
+        ma_period = int(message.text.replace("MA", ""))
+        
+        # Check if the available data points are enough for the MA period
+        available_data_points = len(validated_price_data.dropna())
+        if ma_period > available_data_points:
+            # If the MA period exceeds available data points, send an error message
+            send_error_message(message, category="MA period", reason=f"not enough data to calculate MA{ma_period}. Only {available_data_points} days of data are available.")
+            logger.info(f"chat_id: {message.chat.id}: Not enough data to calculate MA{ma_period}. Only {available_data_points} data points available. Error message sent.")
+            return
+        
+        # If enough data is available, proceed with adding the alert
         validated_alert_level = message.text
     elif message.text.replace("%", "", 1).replace(".", "", 1).replace("-", "", 1).isdigit() and message.text.endswith("%") and (message.text.startswith("-") or message.text[0].isdigit()):
         validated_alert_level = round((1 + float(message.text.replace("%", "", 1)) / 100) * last_close, 2)
