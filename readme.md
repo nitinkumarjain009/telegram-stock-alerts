@@ -2,6 +2,8 @@
 
 A Python-based Telegram bot for managing stock price alerts 📊, using Yahoo Finance data (via the `yfinance` library) to track stocks and notify users when their desired price thresholds or moving averages are crossed.
 
+<img src="telegram-stock-alerts.gif" alt="Bot Usage" width="600"/>
+
 ## ✨ Features
 
 - **Add Alerts**: Users can set alerts for specific stock tickers when the stock reaches a particular price level, percentage change, or moving average (e.g., MA100).
