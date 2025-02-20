@@ -78,13 +78,20 @@ def validate_row_number(message):
         bot.send_message(message.chat.id, "That's not a valid alert ID. Please provide only the number.")
 
 def show_all_alerts(call):
-    """Fetches and displays all alerts for the user."""
+    """Fetches and displays all alerts for the user with optimized formatting."""
     connection = database.connect()
     all_alerts = database.get_all_alerts(connection, call.message.chat.id)
+    
     if all_alerts:
-        formatted_alerts = [f"<b>Alert {row[5]}</b>\n<b>Ticker:</b> {row[2]}\n<b>Close Price:</b> {row[4]}\n<b>Alert Level:</b> {row[3]}\n" for row in all_alerts]
-        formatted_alerts = "\n".join(formatted_alerts)
-        bot.send_message(call.message.chat.id, formatted_alerts, parse_mode="html")
+        # Optimize alert formatting for brevity
+        formatted_alerts = [
+            f"<b>Alert {row[5]}:</b> {row[2]} @ {row[4]} (Alert: {row[3]})"
+            for row in all_alerts
+        ]
+        formatted_alerts_text = "\n".join(formatted_alerts)
+        
+        # Send the formatted message
+        bot.send_message(call.message.chat.id, formatted_alerts_text, parse_mode="html")
         logger.info(f"chat_id: {call.message.chat.id}: Alert list sent.")
     else:
         bot.send_message(call.message.chat.id, "No alerts have been added yet")
@@ -106,7 +113,7 @@ def validate_ticker_and_price_data(message):
             logger.info(f"chat_id: {message.chat.id}: Price data for {validated_ticker} is empty. Error message sent.")
         else:
             validated_price_data = price_data
-            last_close = validated_price_data["Adj Close"].iloc[-1]
+            last_close = validated_price_data[("Close", validated_ticker)].iloc[-1]
             last_date = validated_price_data.index[-1].date()
             alert_prompt = f"The last close price for {validated_ticker} is {last_close:.2f} on {last_date}.\n\nAdd an alert level for {validated_ticker}. For example:\n130.02\nMA100 (100 daily moving average)\n10%\n-5.5%"
             bot.send_message(message.chat.id, alert_prompt)
@@ -129,7 +136,7 @@ def validate_alert_level(message, validated_ticker_symbol, validated_price_data)
     logger.info(f"chat_id: {message.chat.id}: Received response: {message.text}. Validating {message.text} for ticker {validated_ticker_symbol}.")
     
     # Get the last close price
-    last_close = round(validated_price_data["Adj Close"].iloc[-1], 2)
+    last_close = round(validated_price_data[("Close", validated_ticker_symbol)].iloc[-1], 2)
     
     # Check if alert level is valid (percentage, price, or moving average)
     if message.text.startswith("MA") and message.text.replace("MA", "", 1).isdigit():

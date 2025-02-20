@@ -46,12 +46,12 @@ def main():
         alert_id, chat_id, ticker, alert_level, last_close, _ = alert
 
         # Get the latest close price for the current ticker
-        current_close = round(price_data[("Adj Close", ticker)].loc[price_data[("Adj Close", ticker)].last_valid_index()], 2)
+        current_close = round(price_data[("Close", ticker)].loc[price_data[("Close", ticker)].last_valid_index()], 2)
 
         # Handle alerts based on Moving Average (MA)
         if "MA" in alert_level:
             # Calculate the moving average for the given period (e.g., MA100 for 100-day MA)
-            alert_level_MA = price_data[("Adj Close", ticker)].dropna().rolling(window=int(alert_level.split("MA")[1])).mean().iloc[-1]
+            alert_level_MA = price_data[("Close", ticker)].dropna().rolling(window=int(alert_level.split("MA")[1])).mean().iloc[-1]
             logger.info(f"chat_id: {chat_id}: Checking alert_id {alert_id} at alert level {alert_level} ({alert_level_MA:.2f}) for {ticker} at last close {last_close} and current close {current_close}")
             
             # Trigger alert if the current price crosses the MA level
