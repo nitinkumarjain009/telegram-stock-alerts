@@ -9,7 +9,7 @@ def main():
     """Main function that fetches and checks stock alerts for all users,
     and triggers notifications if conditions are met."""
     
-    # Set up logging for this script
+    # Set up logging for this scripts
     logger = setup_logger(os.path.basename(__file__))
     logger.info("Start")
 
