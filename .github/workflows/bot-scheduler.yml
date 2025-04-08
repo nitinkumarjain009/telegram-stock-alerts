@@ -1,0 +1,53 @@
+name: Stock Trading Signal Bot
+on:
+  schedule:
+    # Run during market hours on weekdays (UTC times)
+    # Indian market hours 9:30 AM to 3:30 PM IST correspond to 4:00 AM to 10:00 AM UTC
+    - cron: '0 4-10 * * 1-5'  # Every hour from 4 AM to 10 AM UTC, Monday to Friday
+  workflow_dispatch:  # Allows manual triggering through GitHub UI
+
+jobs:
+  run_trading_bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Set up TA-Lib
+        run: |
+          wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
+          tar -xzf ta-lib-0.4.0-src.tar.gz
+          cd ta-lib/
+          ./configure --prefix=/usr
+          make
+          sudo make install
+          pip install TA-Lib
+      
+      - name: Run stock trading bot
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
+          WHATSAPP_NUMBER: ${{ secrets.WHATSAPP_NUMBER }}
+        run: python bot.py
+      
+      - name: Save logs as artifacts
+        if: always()  # Run even if previous steps fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs
+          path: |
+            *.log
+            logs/
